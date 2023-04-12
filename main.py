@@ -102,4 +102,4 @@ async def idle(payload: IdleInput):
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", debug=True)
+    uvicorn.run("main:app", debug=True, port=8001)
