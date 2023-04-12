@@ -37,7 +37,7 @@ async def chat(payload: ChatInput):
         s = datetime.now()
 
         chat_stream = await gpt_api.aio_chat(
-            payload.query, payload.chat_history, payload.character
+            payload.message, payload.chat_history, payload.ai_traits, payload.user_traits
         )
 
         event_data = {

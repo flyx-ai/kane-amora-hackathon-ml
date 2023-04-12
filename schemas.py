@@ -1,5 +1,7 @@
 from typing import Literal, Optional
 
+from pydantic import BaseModel
+
 
 class ChatMessage(BaseModel):
     role: Literal["user", "assistant"]
@@ -9,7 +11,7 @@ class ChatMessage(BaseModel):
 class UserTraits(BaseModel):
     name: str
     interests: list[str]
-    intent: list[str]
+    intents: list[str]
 
 
 class AITraits(BaseModel):
@@ -17,6 +19,7 @@ class AITraits(BaseModel):
     
 
 class ChatInput(BaseModel):
+    message: str
     chat_history: Optional[list[ChatMessage]]
     ai_traits: AITraits
     user_traits: UserTraits
