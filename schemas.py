@@ -16,6 +16,7 @@ class UserTraits(BaseModel):
 
 class AITraits(BaseModel):
     name: str
+    level: int
     
 
 class ChatInput(BaseModel):
