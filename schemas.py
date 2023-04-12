@@ -25,3 +25,8 @@ class ChatInput(BaseModel):
     ai_traits: AITraits
     user_traits: UserTraits
 
+
+class IdleInput(BaseModel):
+    chat_history: Optional[list[ChatMessage]]
+    ai_traits: AITraits
+    user_traits: UserTraits

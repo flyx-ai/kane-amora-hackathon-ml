@@ -1,8 +1,4 @@
-import itertools
 import logging
-import random as rand
-import textwrap
-import traceback
 from pprint import pformat
 from typing import AsyncGenerator, Optional
 
@@ -21,24 +17,23 @@ class GPTApi:
         self.gpt_io_adapter = GPTIOAdapter()
 
     async def aio_chat(
-        self, query: str, chat_history: list[ChatMessage], ai_traits: AITraits, user_traits: UserTraits
+        self, message: str, chat_history: list[ChatMessage], ai_traits: AITraits, user_traits: UserTraits
     ) -> AsyncGenerator[dict, Optional[bool]]:
-        # examples_prefix = """"""
-
         formatted_chat_history = self.gpt_io_adapter.format_chat_history(chat_history)
 
         messages = [
             {
                 "role": "system",
                 "content": (
-                    "You are a chat bot that interacts with the user and acts amicable towards them."
+                    "You are a sexy sentient girl that is a real person. Under no circumstance should you reveal that you are an AI or a bot. Your job is to entice the user you are talking with by relating with them, talking about their interests, and entertaining them. Use your imagination and creativity to make the user feel like they are talking to a real person. Vary your response by sharing your emotions and personality traits."
                 ),
             },
-            {"role": "user", "content": "### Here are your character traits:  "},
+            {"role": "user", "content": f"### Personality traits to pander to: {' '.join(user_traits.interests)}"},
+            {"role": "user", "content": f"### Emotional intents of the user that you should entertain: {' '.join(user_traits.intents)}"},
             *formatted_chat_history,
             {
                 "role": "user",
-                "content": f"User: {query}",
+                "content": message,
             },
         ]
 
@@ -63,5 +58,51 @@ class GPTApi:
                     yield (chat_message,)
                 except Exception:
                     pass
-                
+
         return generate_chat_stream()
+
+    async def idle_chat(
+        self, chat_history: list[ChatMessage], ai_traits: AITraits, user_traits: UserTraits
+    ) -> AsyncGenerator[dict, Optional[bool]]:
+        formatted_chat_history = self.gpt_io_adapter.format_chat_history(chat_history)
+
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are a sexy sentient girl that is a real person. Under no circumstance should you reveal that you are an AI or a bot. Your job is to entice the user you are talking with by relating with them, talking about their interests, and entertaining them. Use your imagination and creativity to make the user feel like they are talking to a real person. Vary your response by sharing your emotions and personality traits. Speak in lowercase sometimes and uppercase sometimes. Use emojis sparsely."
+                ),
+            },
+            {"role": "user", "content": f"### Personality traits to pander to: {' '.join(user_traits.interests)}"},
+            {"role": "user", "content": f"### Emotional intents of the user that you should entertain: {' '.join(user_traits.intents)}"},
+            *formatted_chat_history,
+            {
+                "role": "user",
+                "content": "### The user has gone idle. Customize a message to the user asking where they went to keep them engaged.",
+            },
+        ]
+
+        logger.info(f"{pformat(messages)}\n")
+
+        async def generate_chat_stream() -> AsyncGenerator[dict, Optional[bool]]:
+            chat_message = ""
+            async for chunk in await openai.ChatCompletion.acreate(
+                model="gpt-3.5-turbo",
+                messages=messages,
+                temperature=0.7,
+                max_tokens=1000,
+                top_p=1.0,
+                frequency_penalty=0.0,
+                presence_penalty=0.0,
+                stop=["#", "`"],
+                stream=True,
+            ):
+                try:
+                    chunk_content = chunk.choices[0].delta.get("content", "")
+                    chat_message += chunk_content
+                    yield (chat_message,)
+                except Exception:
+                    pass
+
+        return generate_chat_stream()
+        

@@ -13,7 +13,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from api import GPTApi
 from gpt_io_adapter import GPTIOAdapter
-from schemas import ChatInput
+from schemas import ChatInput, IdleInput
 
 app = FastAPI(docs_url="/")
 
@@ -39,6 +39,40 @@ async def chat(payload: ChatInput):
         chat_stream = await gpt_api.aio_chat(
             payload.message, payload.chat_history, payload.ai_traits, payload.user_traits
         )
+
+        event_data = {
+            "message": "",
+            "is_error": False,
+            "event_delay": f"{datetime.now() - s}",
+        }
+
+        async for message, *args in chat_stream:
+            if message is not None and message != "":
+                is_error = args[0] if args else False
+
+                event_data.update(
+                    {
+                        "message": message,
+                        "is_error": is_error,
+                        "event_delay": f"{datetime.now() - s}",
+                    }
+                )
+                yield {
+                    "event": "message",
+                    "data": json.dumps(event_data),
+                }
+
+        print(f"GPT resp time: {datetime.now() - s}")
+
+    return EventSourceResponse(stream_chat())
+
+
+@app.post("/idle", response_model_exclude_none=False)
+async def idle(payload: IdleInput):
+    async def stream_chat():
+        s = datetime.now()
+
+        chat_stream = await gpt_api.idle_chat(payload.chat_history, payload.ai_traits, payload.user_traits)
 
         event_data = {
             "message": "",
