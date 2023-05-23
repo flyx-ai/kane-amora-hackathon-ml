@@ -1,5 +1,5 @@
 python-decouple==3.4
-requests==2.25.1
+requests==2.31.0
 fastapi==0.66.0
 uvicorn==0.14.0
 openai==0.27.2
